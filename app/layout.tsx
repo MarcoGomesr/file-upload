@@ -1,4 +1,4 @@
-import { Toaster } from "@/components/ui/Toast";
+import { Toaster } from "@/app/components/ui/Toast";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
