@@ -4,14 +4,16 @@ import { Button } from "./Button"
 
 export function DeleteButton() {
   const { pending } = useFormStatus()
+  const Icon = pending ? Loader2 : XIcon
 
   return (
-    <Button size="icon" variant="destructive" disabled={pending}>
-      {pending ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        <XIcon className="size-4" />
-      )}
+    <Button
+      size="icon"
+      variant="destructive"
+      disabled={pending}
+      aria-label={pending ? "Deleting..." : "Delete"}
+    >
+      <Icon className={`size-4 ${pending ? "animate-spin" : ""}`} />
     </Button>
   )
 }
