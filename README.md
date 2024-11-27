@@ -36,7 +36,7 @@ Optimize images for faster loading and improved performance.
 
 ## Installation
 
-1. First, clone the repository https://github.com/yourusername/easy-file-uploads.git
+1. First, clone the repository [https://github.com/yourusername/easy-file-uploads.git](https://github.com/MarcoGomesr/file-upload-nextjs-15.git)
 2. Install their dependencies:
 
 ```bash
