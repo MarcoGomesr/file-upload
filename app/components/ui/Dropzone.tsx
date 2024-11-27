@@ -1,13 +1,14 @@
 "use client"
 
-import { deleteImage } from "@/app/actions"
-import { pinata } from "@/app/lib/config"
-import { cn } from "@/app/lib/utils"
-import { Loader2, XIcon } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import Image from "next/image"
 import React, { useCallback, useState } from "react"
 import { FileRejection, useDropzone } from "react-dropzone"
 import { toast } from "sonner"
+
+import { deleteImage } from "@/app/actions"
+import { pinata } from "@/app/lib/config"
+import { cn } from "@/app/lib/utils"
 import { Button } from "./Button"
 import { DeleteButton } from "./DeleteButton"
 
@@ -16,59 +17,22 @@ export function Dropzone() {
     Array<{ file: File; uploading: boolean; id?: string }>
   >([])
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length) {
-      setFiles((prevFiles) => [
-        ...prevFiles,
-        ...acceptedFiles.map((file) => ({ file, uploading: false })),
-      ])
-    }
-    acceptedFiles.forEach(uploadFile)
-  }, [])
-
-  const rejectedFiles = useCallback((fileRejection: FileRejection[]) => {
-    if (fileRejection.length) {
-      const manyFiles = fileRejection.find(
-        (rejection) => rejection.errors[0].code === "too-many-files"
-      )
-
-      const fileSizetoBig = fileRejection.find(
-        (rejection) => rejection.errors[0].code === "file-too-large"
-      )
-
-      if (manyFiles) {
-        toast.error("Too many files selected, max is 5")
-      }
-
-      if (fileSizetoBig) {
-        toast.error("File size exceed 5mb")
-      }
-    }
-  }, [])
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    onDropRejected: rejectedFiles,
-    maxFiles: 5,
-    maxSize: 1024 * 5,
-    accept: {
-      "image/*": [],
-    },
-  })
-
   const uploadFile = async (file: File) => {
     try {
+      //we will upload everything right here...
+
       setFiles((prevFiles) =>
-        prevFiles.map((f) => (f.file === file ? { ...f, upload: true } : f))
+        prevFiles.map((f) => (f.file === file ? { ...f, uploading: true } : f))
       )
 
       const keyRequest = await fetch("/api/key")
       const keyData = await keyRequest.json()
-      const { id } = await pinata.upload.file(file).key(keyData.JWT)
+
+      const upload = await pinata.upload.file(file).key(keyData.JWT)
 
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
-          f.file === file ? { ...f, upload: false, id } : f
+          f.file === file ? { ...f, uploading: false, id: upload.id } : f
         )
       )
 
@@ -77,36 +41,77 @@ export function Dropzone() {
       console.log(error)
 
       setFiles((prevFiles) =>
-        prevFiles.map((f) => (f.file === file ? { ...f, upload: false } : f))
+        prevFiles.map((f) => (f.file === file ? { ...f, uploading: false } : f))
       )
 
       toast.error("Something went wrong")
     }
   }
 
-  const removeFile = async (fieldId: string, fieldName: string) => {
-    if (fieldId) {
-      const result = await deleteImage(fieldId)
+  const removeFile = async (fileId: string, fileName: string) => {
+    if (fileId) {
+      const result = await deleteImage(fileId)
 
       if (result.success) {
-        setFiles((prevFiles) => prevFiles.filter((f) => f.id !== fieldId))
-        toast.success(`File ${fieldName} deleted successfully`)
+        setFiles((prevFiles) => prevFiles.filter((f) => f.id !== fileId))
+        toast.success(`File ${fileName} deleted successfully`)
       } else {
         toast.error("Error deleting File...")
       }
     }
   }
 
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length) {
+      setFiles((prevFiles) => [
+        ...prevFiles,
+        ...acceptedFiles.map((file) => ({ file, uploading: false })),
+      ])
+
+      acceptedFiles.forEach(uploadFile)
+    }
+  }, [])
+
+  const rejectedFiles = useCallback((fileRejection: FileRejection[]) => {
+    if (fileRejection.length) {
+      const tooManyFiles = fileRejection.find(
+        (rejection) => rejection.errors[0].code === "too-many-files"
+      )
+
+      const fileSizeToBig = fileRejection.find(
+        (rejection) => rejection.errors[0].code === "file-too-large"
+      )
+
+      if (tooManyFiles) {
+        toast.error("Too many files selected, max is 5")
+      }
+
+      if (fileSizeToBig) {
+        toast.error("File size exceeds 5mb limit")
+      }
+    }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    onDropRejected: rejectedFiles,
+    maxFiles: 5,
+    maxSize: 1024 * 1024 * 5, // 5mb
+    accept: {
+      "image/*": [],
+    },
+  })
+
   return (
     <>
       <div
         {...getRootProps({
-          className: "p-16 mt-10 border-dashed rounded-lg border-2",
+          className: "p-16 mt-10 border-dashed rounded-lg border-2 w-full",
         })}
       >
         <input {...getInputProps()} />
         {isDragActive ? (
-          <p>Drop the files here ...</p>
+          <p className="text-center">Drop the files here ...</p>
         ) : (
           <div className="flex flex-col items-center gap-y-3">
             <p>Drag 'n' drop some files here, or click to select files</p>
@@ -114,13 +119,14 @@ export function Dropzone() {
           </div>
         )}
       </div>
-      <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
+
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
         {files.map(({ file, uploading, id }) => (
           <div key={file.name} className="relative w-full group">
-            <div>
+            <div className="relative">
               <Image
                 src={URL.createObjectURL(file)}
-                alt={""}
+                alt={file.name}
                 width={200}
                 height={200}
                 className={cn(
@@ -128,15 +134,17 @@ export function Dropzone() {
                   "rounded-lg object-cover size-32"
                 )}
               />
+
               {uploading && (
-                <div className="absolute inset-0 flex items-center">
-                  <Loader2 className="size-6 animate-spin text-primary" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="size-8 animate-spin text-primary" />
                 </div>
               )}
             </div>
+
             <form
               action={() => removeFile(id!, file.name)}
-              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity "
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <DeleteButton />
             </form>
