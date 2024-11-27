@@ -5,7 +5,7 @@ async function getData() {
 
   const url = await pinata.gateways
     .createSignedURL({
-      cid: "",
+      cid: "xxx",
       expires: 500,
     })
     .optimizeImage({

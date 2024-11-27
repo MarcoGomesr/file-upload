@@ -26,7 +26,7 @@ Use signed URLs for secure file access.
 🖼️ Image Optimization
 Optimize images for faster loading and improved performance.
 
-## Library used
+## Libraries
 
 - Tailwindcss (css)
 - lucide-react (icons)
@@ -49,7 +49,14 @@ pnpm dev
 bun dev
 ```
 
-3. Then run the development server
+4. create an `.env` file and fill the following variables
+
+```
+PINATA_JWT=exxx
+NEXT_PUBLIC_GATEWAY_URL=xxx
+```
+
+5. Then run the development server
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
