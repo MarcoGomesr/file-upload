@@ -1,6 +1,8 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 # Upload File Drag & Drop
+![Screenshot 2024-11-27 at 11 56 01 AM](https://github.com/user-attachments/assets/46cdcf90-0c58-452d-b64b-aceaa0a52071)
+
 
 ## Description
 
